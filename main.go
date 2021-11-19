@@ -1,31 +1,44 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
 
-func reg(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-
-	if err != nil {
-		http.Error(w,
-			fmt.Sprintf("cannot parse form. Error: %s", err.Error()),
-			http.StatusInternalServerError,
-		)
-		return
-	}
+type formValidationRequest struct {
+	Name     string `json:"name"`
+	Mail     string `json:"mail"`
+	Password string `json:"password"`
 }
 
+func reg(w http.ResponseWriter, r *http.Request) {
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("%s\n", err.Error())
+	}
+	defer r.Body.Close()
 
+	fvr := &formValidationRequest{}
+
+	err = json.Unmarshal(b, fvr)
+	if err != nil {
+		log.Printf("%s\n", err.Error())
+	}
+	panic(err)
+
+	fmt.Printf("%+v\n", fvr)
+
+}
 
 func main() {
 
 	fs := http.FileServer(http.Dir("ui/"))
 
 	http.Handle("/", fs)
-	http.HandleFunc("/form", reg)
+	http.HandleFunc("/validate", reg)
 
 	log.Println("Server is starting on port 7777")
 	err := http.ListenAndServe(":7777", nil)
