@@ -6,7 +6,7 @@ button.addEventListener('click', function (){
     let form = {
         name: nameInput.value,
         mail: mailInput.value,
-        pass: passInput.value,
+        password: passInput.value,
     }
 
     fetch( window.location.origin + '/validate', {
@@ -25,7 +25,7 @@ button.addEventListener('click', function (){
         .then(data => {
             console.log('Success:', data);
         })
-        .catch(function (error) {
-        console.log(error);
+        .catch((error) => {
+        console.error('Error:', error);
     })
 })

@@ -18,6 +18,7 @@ func reg(w http.ResponseWriter, r *http.Request) {
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("%s\n", err.Error())
+		return
 	}
 	defer r.Body.Close()
 
@@ -26,8 +27,9 @@ func reg(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(b, fvr)
 	if err != nil {
 		log.Printf("%s\n", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
-	panic(err)
 
 	fmt.Printf("%+v\n", fvr)
 
