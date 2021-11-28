@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Server22/validate"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -22,23 +23,35 @@ func reg(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	fvr := &formValidationRequest{}
-
-	err = json.Unmarshal(b, fvr)
+	var fvr validate.FormD
+	err = json.Unmarshal(b, &fvr)
 	if err != nil {
 		log.Printf("%s\n", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 	fmt.Printf("%+v\n", fvr)
+	fmt.Fprintf(w, "{\"status\": \"%s\", \"errors\": [\"nope\"]}", "successfulle")
 
+	errors := validate.ValidateFormD(&fvr)
+	sendErrors(w, errors)
+
+}
+
+func sendErrors(w http.ResponseWriter, errors validate.ValidationErrs) {
+	b, err := json.Marshal(errors)
+	if err != nil {
+		http.Error(w,
+			err.Error(),
+			http.StatusInternalServerError,
+		)
+	}
+	w.Write(b)
 }
 
 func main() {
 
 	fs := http.FileServer(http.Dir("ui/"))
-
 	http.Handle("/", fs)
 	http.HandleFunc("/validate", reg)
 
