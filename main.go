@@ -9,12 +9,6 @@ import (
 	"net/http"
 )
 
-type formValidationRequest struct {
-	Name     string `json:"name"`
-	Mail     string `json:"mail"`
-	Password string `json:"password"`
-}
-
 func reg(w http.ResponseWriter, r *http.Request) {
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -23,7 +17,7 @@ func reg(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	var fvr validate.FormD
+	var fvr validate.Form
 	err = json.Unmarshal(b, &fvr)
 	if err != nil {
 		log.Printf("%s\n", err.Error())
@@ -31,20 +25,21 @@ func reg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Printf("%+v\n", fvr)
-	fmt.Fprintf(w, "{\"status\": \"%s\", \"errors\": [\"nope\"]}", "successfulle")
 
-	errors := validate.ValidateFormD(&fvr)
+	errors := fvr.ValidateForm()
+
 	sendErrors(w, errors)
 
 }
 
-func sendErrors(w http.ResponseWriter, errors validate.ValidationErrs) {
+func sendErrors(w http.ResponseWriter, errors []error) {
 	b, err := json.Marshal(errors)
 	if err != nil {
 		http.Error(w,
 			err.Error(),
 			http.StatusInternalServerError,
 		)
+		return
 	}
 	w.Write(b)
 }

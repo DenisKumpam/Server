@@ -1,0 +1,57 @@
+info:
+  title: validation
+  version: 1.0.0
+    name: Denis Kumpan
+    url: https://github.com/DenisKumpam
+    
+paths:
+/users/{user_id}:
+  parameters:
+    - $ref: '#/parameters/UserID'
+  get:
+    summary: Get user info
+    description: Get information about currently logged in user
+    tags:
+      - User
+    responses:
+      '200':
+        description: Success
+        schema:
+          $ref: '#/definitions/User'
+    security:
+      - token:
+      
+parameters:
+  UserID:
+    description: UserID
+    name: userID
+    in: path
+    required: true
+    type: integer
+    items:
+      $ref: '#/components/schemas/ValidationError'
+
+definitions:
+  User:
+    title: User
+    type: object
+    properties:
+      id:
+        type: integer
+        description: ID for user
+        example: 10
+      first_name:
+        type: string
+        example: Dahm Right
+      email:
+        type: string
+      password:
+        type: string
+
+  ValidationError:
+      properties:
+        field:
+          type: string
+        error_message:
+          type: string      
+        

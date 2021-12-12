@@ -1,6 +1,9 @@
 package validate
 
-import "net/mail"
+import (
+	"log"
+	"net/mail"
+)
 
 const (
 	minPasswordLength = 8
@@ -10,82 +13,72 @@ const (
 	tooShortPasswordError = "Too short password error"
 	tooLongPasswordError  = "Too long password error"
 	emailFormatError      = "Email format error"
+	NameField             = "name"
 )
 
-type FormD map[string]string
+type Form struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
 
 type validationErr struct {
-	Key string `json:"key"`
-	Err string `json:"Err"`
+	Fail string `json:"key"`
+	Err  string `json:"Err"`
 }
 
-type ValidationErrs struct {
-	Errors []validationErr
+func (ve validationErr) Error() string {
+	return ve.Err
 }
 
-type regError struct {
-	err string
-}
+func (fd *Form) ValidateForm() []error {
+	errors := make([]error, 0)
 
-func (r regError) Error() string {
-	return r.err
-}
-
-func Empty(str string) error {
-	if str == "" {
-		return regError{emptyStringError}
+	if Empty(fd.Name) {
+		errors = append(errors, validationErr{NameField, emptyStringError})
 	}
-	return nil
+
+	err := Email(fd.Email)
+	if err != nil {
+		errors = append(errors, err)
+	}
+
+	err = Password(fd.Password)
+	if err != nil {
+		errors = append(errors, err)
+	}
+
+	return errors
+}
+
+func Empty(str string) bool {
+	if str == "" {
+		return true
+	}
+	return false
 }
 
 func Email(email string) error {
 	_, err := mail.ParseAddress(email)
 	if err != nil {
-		return regError{emailFormatError}
+		log.Printf("%s\n", err.Error())
+		return validationErr{"Email", emailFormatError}
 	}
 	return nil
 }
+
 func Password(password string) error {
 	if password == "" {
-		return &regError{emptyStringError}
+		return &validationErr{"Pass", emptyStringError}
 	}
 
 	if len(password) < minPasswordLength {
-		return &regError{tooShortPasswordError}
+		return &validationErr{"ShortPass", tooShortPasswordError}
 	}
 
 	if len(password) > maxPasswordLength {
-		return &regError{tooLongPasswordError}
+		return &validationErr{"LongPass", tooLongPasswordError}
 	}
 
 	return nil
-}
-func ValidateFormD(r *FormD) ValidationErrs {
-	errors := ValidationErrs{}
-
-	for k, val := range *r {
-		err := validation(k, val)
-		if err != nil {
-			errors.Errors = append(errors.Errors, validationErr{k, err.Error()})
-		} else {
-			errors.Errors = append(errors.Errors, validationErr{k, ""})
-		}
-	}
-	return errors
-}
-
-func validation(key, str string) error {
-	err := Empty(str)
-	if err != nil {
-		return err
-	}
-
-	if key == "email" {
-		err = Email(str)
-	} else {
-		if key == "password" {
-			err = Password(str)
-		}
-	}
-	return err
 }
